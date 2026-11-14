@@ -178,9 +178,9 @@ CHALLENGE=$(printf '%s' "$VERIFIER" \
 Open (URL-encode the parameters in a real client):
 
 ```text
-https://auth.example.com/authorize?response_type=code
-  &client_id=demo-app
-  &redirect_uri=https%3A%2F%2Fapp.example.com%2Fcallback
+https://payrole-oidc.plopmenz.openmesh.cloud/authorize?response_type=code
+  &client_id=payrole-web
+  &redirect_uri=https%3A%2F%2Fnear-payrole.vercel.app%2Foidc%2Fcallback
   &scope=openid%20profile%20roles
   &state=random-state
   &nonce=random-nonce
@@ -191,19 +191,20 @@ https://auth.example.com/authorize?response_type=code
 After signing the NEP-413 message and receiving the code:
 
 ```bash
-curl -sS -X POST https://auth.example.com/token \
+curl -sS -X POST https://payrole-oidc.plopmenz.openmesh.cloud/token \
   -H 'content-type: application/x-www-form-urlencoded' \
   --data-urlencode grant_type=authorization_code \
   --data-urlencode code="$CODE" \
-  --data-urlencode redirect_uri=https://app.example.com/callback \
-  --data-urlencode client_id=demo-app \
+  --data-urlencode redirect_uri=https://near-payrole.vercel.app/oidc/callback \
+  --data-urlencode client_id=payrole-web \
   --data-urlencode code_verifier="$VERIFIER"
 ```
 
 Validate the returned JWT against `/jwks.json`, then read live roles:
 
 ```bash
-curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" https://auth.example.com/userinfo
+curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" \
+  https://payrole-oidc.plopmenz.openmesh.cloud/userinfo
 ```
 
 For confidential clients, add HTTP Basic authentication or `client_secret` in the form body.
@@ -214,13 +215,13 @@ Access token:
 
 ```json
 {
-  "iss": "https://auth.example.com",
+  "iss": "https://payrole-oidc.plopmenz.openmesh.cloud",
   "sub": "alice.testnet",
-  "aud": "demo-app",
+  "aud": "payrole-web",
   "exp": 1760000000,
   "iat": 1759999100,
   "jti": "<session id>",
-  "client_id": "demo-app",
+  "client_id": "payrole-web",
   "scope": "openid profile roles",
   "roles": ["admin", "employee"],
   "token_use": "access"

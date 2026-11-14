@@ -65,7 +65,7 @@ cp .env.example .env
 | `PUBLIC_SALARY_TOKEN_DECIMALS` | no | Decimals used to format the demo token. Defaults to `6`. |
 | `PUBLIC_SALARY_TOKEN_SYMBOL` | no | Display symbol for the demo token. Defaults to `MOCK`. |
 | `PUBLIC_DEMO_FUND_AMOUNT` | no | Human-readable amount minted by the free funding button. Defaults to `100`. |
-| `PUBLIC_OIDC_ISSUER` | no | OIDC issuer base URL, e.g. `https://auth.example.com`. Empty disables the access tab's sign-in button. |
+| `PUBLIC_OIDC_ISSUER` | no | OIDC issuer base URL, e.g. `https://payrole-oidc.plopmenz.openmesh.cloud`. Empty disables the access tab's sign-in button. |
 | `PUBLIC_OIDC_CLIENT_ID` | no | Registered public client id, e.g. `payrole-web`. |
 | `PUBLIC_OIDC_SCOPES` | no | Requested scopes. Defaults to `openid profile roles`. |
 | `PUBLIC_OIDC_REDIRECT_URI` | no | Registered redirect URI. Defaults to `${PUBLIC_SITE_URL}/oidc/callback`, or `${window.location.origin}/oidc/callback` when no site URL is set. |

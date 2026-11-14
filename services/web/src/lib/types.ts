@@ -14,7 +14,7 @@ export interface AppConfig {
   salaryTokenSymbol: string;
   /** Human-readable amount minted by the free demo funding button. */
   demoFundAmount: string;
-  /** OIDC issuer base URL, e.g. https://auth.example.com. Empty disables OIDC sign-in. */
+  /** OIDC issuer base URL, e.g. https://payrole-oidc.plopmenz.openmesh.cloud. Empty disables OIDC sign-in. */
   oidcIssuer: string;
   oidcClientId: string;
   oidcScopes: string;

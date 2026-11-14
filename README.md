@@ -64,6 +64,25 @@ testnet: `payrole-factory.testnet`. Hosted demo: <https://near-payrole.vercel.ap
 > **Hackathon:** built for NEAR HACKATHON, November 2026. The contracts and the demo run on NEAR
 > testnet.
 
+## Contents
+
+- [Judge walkthrough: do X, see Y](#judge-walkthrough-do-x-see-y)
+- [What the role NFT design fixes](#what-the-role-nft-design-fixes)
+- [Repository layout](#repository-layout)
+- [Built with](#built-with)
+- [Quick start](#quick-start)
+- [Role and token identifiers](#role-and-token-identifiers)
+- [Contract API](#contract-api)
+- [Salary model](#salary-model)
+- [Using roles from another contract](#using-roles-from-another-contract)
+- [Factory and web app](#factory-and-web-app)
+- [Production: global contract by hash](#production-global-contract-by-hash)
+- [OIDC provider](#oidc-provider)
+- [Security model](#security-model)
+- [Limitations](#limitations)
+- [Testing](#testing)
+- [License](#license)
+
 ## Judge walkthrough: do X, see Y
 
 This walkthrough starts at the hosted app — **<https://near-payrole.vercel.app>** — and uses
@@ -237,6 +256,11 @@ stores and clients can pin as `PUBLIC_EXPECTED_CHILD_CODE_HASH`.
 **Do:**
 
 ```bash
+# The example config points signing_key_path at this file.
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+  -out services/oidc/signing-key.pem
+chmod 600 services/oidc/signing-key.pem
+
 cargo test -p payrole-oidc
 cargo run -p payrole-oidc --release -- services/oidc/config.example.toml
 ```
@@ -250,8 +274,9 @@ curl -s http://127.0.0.1:8080/jwks.json
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/healthz
 ```
 
-The discovery document contains `"issuer":"https://auth.example.com"` plus `token_endpoint` and
-`jwks_uri`; the JWKS contains a key with `"kty":"RSA"`, `"alg":"RS256"`, and `"use":"sig"`; the
+The discovery document contains
+`"issuer":"https://payrole-oidc.plopmenz.openmesh.cloud"` plus `token_endpoint` and `jwks_uri`;
+the JWKS contains a key with `"kty":"RSA"`, `"alg":"RS256"`, and `"use":"sig"`; the
 health check prints `200`. If port 8080 is already in use, change `listen` in the config (and
 the curl URLs) to another port. For the hosted web client, register
 `https://near-payrole.vercel.app/oidc/callback` and add
@@ -271,25 +296,6 @@ the curl URLs) to another port. For the hosted web client, register
 | Configurable role → OIDC access mapping | Step 7; `services/web/src/lib/access.ts`. |
 | Off-chain SSO from on-chain roles | Step 8; `services/oidc`. |
 | Production global-by-hash trade-off documented | [Production: global contract by hash](#production-global-contract-by-hash). |
-
-## Contents
-
-- [Judge walkthrough: do X, see Y](#judge-walkthrough-do-x-see-y)
-- [What the role NFT design fixes](#what-the-role-nft-design-fixes)
-- [Repository layout](#repository-layout)
-- [Built with](#built-with)
-- [Quick start](#quick-start)
-- [Role and token identifiers](#role-and-token-identifiers)
-- [Contract API](#contract-api)
-- [Salary model](#salary-model)
-- [Using roles from another contract](#using-roles-from-another-contract)
-- [Factory and web app](#factory-and-web-app)
-- [Production: global contract by hash](#production-global-contract-by-hash)
-- [OIDC provider](#oidc-provider)
-- [Security model](#security-model)
-- [Limitations](#limitations)
-- [Testing](#testing)
-- [License](#license)
 
 ## What the role NFT design fixes
 
@@ -907,12 +913,12 @@ with **NEP-413** and authorizes it with **live on-chain roles**.
 Example token exchange:
 
 ```bash
-curl -sS -X POST https://auth.example.com/token \
+curl -sS -X POST https://payrole-oidc.plopmenz.openmesh.cloud/token \
   -H 'content-type: application/x-www-form-urlencoded' \
   --data-urlencode grant_type=authorization_code \
   --data-urlencode code="$CODE" \
-  --data-urlencode redirect_uri=https://app.example.com/callback \
-  --data-urlencode client_id=demo-app \
+  --data-urlencode redirect_uri=https://near-payrole.vercel.app/oidc/callback \
+  --data-urlencode client_id=payrole-web \
   --data-urlencode code_verifier="$VERIFIER"
 ```
 
@@ -927,9 +933,12 @@ curl -sS -X POST https://auth.example.com/token \
 ```
 
 ```bash
-curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" https://auth.example.com/userinfo
-curl -sS -X POST https://auth.example.com/introspect --data-urlencode token="$ACCESS_TOKEN"
-curl -sS -X POST https://auth.example.com/logout --data-urlencode token="$ACCESS_TOKEN"
+curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" \
+  https://payrole-oidc.plopmenz.openmesh.cloud/userinfo
+curl -sS -X POST https://payrole-oidc.plopmenz.openmesh.cloud/introspect \
+  --data-urlencode token="$ACCESS_TOKEN"
+curl -sS -X POST https://payrole-oidc.plopmenz.openmesh.cloud/logout \
+  --data-urlencode token="$ACCESS_TOKEN"
 ```
 
 ### Claims
@@ -1187,6 +1196,22 @@ This is deliberately a hackathon-scale implementation. Known limitations:
   `/login`, `/authorize`, `/token`, and `/introspect` at the reverse proxy.
 - `verify_access_key=false` is unsafe outside local experiments; it removes the binding
   between the signing key and the claimed account.
+
+### Deliberately out of scope: role presentation metadata
+
+The hackathon build exposes generated NEP-245 metadata: the role name as the token name,
+`"<role> role"` as the title, a fixed non-transferable membership description, the current holder
+count as `copies`, and salary/interval details in `extra`. It deliberately has no custom image,
+icon, symbol, or prose. Metadata is never read for access control or payroll, so this does not
+affect the core premise.
+
+For production, the natural next step is optional per-role metadata overrides: title,
+description, `media`/`media_hash`, `reference`/`reference_hash`, and timestamps. The setter would
+be restricted to the contract or role owner and require a storage deposit. Metadata changes are
+normal over a project's lifetime; the blockchain ledger records the previous version and when it
+changed. Images should live on IPFS or Arweave with only the URI and content hash on chain. This
+improves rendering in NEP-245-aware wallets and indexers; it does not make the roles visible in
+NEP-171-only marketplaces, and the tokens remain intentionally non-transferable.
 
 ## Testing
 

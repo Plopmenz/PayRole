@@ -36,11 +36,11 @@ network = "testnet"
 signing_key_path = "services/oidc/signing-key.pem"
 
 # NEP-413 recipient defaults to the host part of `issuer`.
-# nep413_recipient = "auth.example.com"
+# nep413_recipient = "payrole-oidc.plopmenz.openmesh.cloud"
 #
 # Optional callback URL included in the signed NEP-413 payload. Wallets that
 # include a callback URL require this to be set to the exact same value.
-# nep413_callback_url = "https://auth.example.com/callback"
+# nep413_callback_url = "https://payrole-oidc.plopmenz.openmesh.cloud/callback"
 
 access_token_ttl_secs = 900
 id_token_ttl_secs = 900
